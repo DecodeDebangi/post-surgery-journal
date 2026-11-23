@@ -1,0 +1,40 @@
+{
+  "name": "post-surgery-journal",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=23.6"
+  },
+  "scripts": {
+    "dev": "npm run dev:server & npm run dev:client; wait",
+    "dev:server": "node --env-file=.env --watch server/src/index.ts",
+    "dev:client": "vite --config client/vite.config.ts",
+    "build": "vite build --config client/vite.config.ts",
+    "db:migrate": "node --env-file=.env server/scripts/migrate.ts",
+    "db:seed": "node --env-file=.env server/scripts/seed.ts",
+    "hash-pin": "node server/scripts/hash-pin.ts",
+    "test": "node --env-file=.env --test --test-concurrency=1 'server/test/*.test.ts'",
+    "typecheck": "tsc -p server/tsconfig.json && tsc -p client/tsconfig.json",
+    "build:vercel": "node server/scripts/build-vercel.ts"
+  },
+  "dependencies": {
+    "@neondatabase/serverless": "^1.2.1",
+    "bcrypt": "^6.0.0",
+    "express": "^5.3.0",
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1",
+    "recharts": "^3.10.1"
+  },
+  "devDependencies": {
+    "@tailwindcss/vite": "^4.3.5",
+    "@types/bcrypt": "^6.0.0",
+    "@types/express": "^5.0.6",
+    "@types/node": "^26.6.6",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "@vitejs/plugin-react": "^6.3.0",
+    "tailwindcss": "^4.3.5",
+    "typescript": "^7.0.2",
+    "vite": "^8.3.8"
+  }
+}
