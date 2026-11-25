@@ -124,7 +124,7 @@ export function DayPage({ date }: { date: string }) {
           </div>
         </div>
         {date < today ? (
-          <Link href={next === today && mode !== "public" ? "/" : `/day/${next}`} className="rounded-full px-3 py-2 text-lg" aria-label="Next day">
+          <Link href={next === today && mode === "me" ? "/" : `/day/${next}`} className="rounded-full px-3 py-2 text-lg" aria-label="Next day">
             ›
           </Link>
         ) : (
@@ -198,7 +198,7 @@ export function DayPage({ date }: { date: string }) {
 
       {day && (day.exists || writable) && (
         <>
-          {hasFlags && mode !== "public" && (
+          {hasFlags && (
             <div className="rounded-2xl border border-clay/40 bg-clay-soft p-3 text-sm text-clay">
               <strong>Red flag:</strong>{" "}
               {(Object.keys(RED_FLAGS) as RedFlagKey[])
@@ -256,8 +256,8 @@ export function DayPage({ date }: { date: string }) {
             </Field>
           </Card>
 
-          {mode !== "public" && (
-            <Card title="Red flags" subtitle={privateNote(mode)}>
+          {(mode !== "public" || hasFlags) && (
+            <Card title="Red flags" subtitle={mode === "me" ? "Your doctor and anyone with the link can see these." : undefined}>
               <div className="flex flex-wrap gap-2">
                 {(Object.keys(RED_FLAGS) as RedFlagKey[]).map((k) => (
                   <button
@@ -334,14 +334,16 @@ export function DayPage({ date }: { date: string }) {
       )}
 
       {/* Also shown on days with nothing logged, so the doctor can comment on a missed day. */}
-      {day && mode !== "public" && (
+      {day && (
         <Comments
           type="day"
           targetKey={date}
-          title={mode === "doctor" ? "Doctor's notes for this day" : "Comments with your doctor"}
+          title={
+            mode === "doctor" ? "Doctor's notes for this day" : mode === "me" ? "Comments with your doctor" : "Notes from the doctor"
+          }
           intro={
             mode === "doctor"
-              ? "Notes, corrections or instructions for this day. Only you and the patient see these. Pick what it's about so it's clear."
+              ? "Notes, corrections or instructions for this day. Anyone with the link can read them. Pick what it's about so it's clear."
               : undefined
           }
           aboutOptions={aboutOptions(day)}

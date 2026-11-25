@@ -74,10 +74,10 @@ async function loadDay(date: string, res: Response): Promise<DayLog> {
 
   if (mode !== "public") return day;
 
-  // Public view: no red flags, no medicines, no prescribed sets/targets/notes.
-  const { flag_locking, flag_catching, flag_giving_way, flag_sharp_pain, ...publicDay } = day;
+  // Public view: red flags and readings are shown; the prescription is not
+  // (no medicines, no prescribed sets/targets/notes).
   return {
-    ...publicDay,
+    ...day,
     items: day.items
       .filter((i) => i.kind === "exercise")
       .map(({ id, kind, slot, name, done, actual }) => ({ id, kind, slot, name, done, actual })),

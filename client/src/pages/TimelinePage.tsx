@@ -1,8 +1,10 @@
 import { useCallback, useEffect, useState } from "react";
-import { formatDate, postOp } from "../../../shared/postop.ts";
+import { addDays, daysBetween, formatDate, postOp } from "../../../shared/postop.ts";
+import { dayStatus, percent } from "../../../shared/status.ts";
 import type { Milestone, TimelineDay } from "../../../shared/types.ts";
 import { api } from "../api.ts";
 import { MilestoneCard, MilestoneForm } from "../components/Milestones.tsx";
+import { StatusChip } from "../components/StatusChip.tsx";
 import { Link } from "../router.tsx";
 import { useSession } from "../session.tsx";
 
@@ -45,7 +47,23 @@ export function TimelinePage() {
     load();
   }
 
-  const dayHref = (date: string) => (date === today && mode !== "public" ? "/" : `/day/${date}`);
+  // Missed days between logged days (newest first), and since the last entry.
+  // Today only counts as missed once it's over.
+  const gapBefore = new Map<string, Gap>();
+  const logged = days.filter(hasDayContent);
+  if (logged.length) {
+    const yesterday = addDays(today, -1);
+    if (logged[0].date < yesterday) {
+      gapBefore.set(days[0].date, { from: addDays(logged[0].date, 1), to: yesterday, ongoing: true });
+    }
+    for (let i = 1; i < logged.length; i++) {
+      const newer = logged[i - 1].date;
+      const older = logged[i].date;
+      if (daysBetween(older, newer) > 1) gapBefore.set(logged[i].date, { from: addDays(older, 1), to: addDays(newer, -1) });
+    }
+      }
+
+  const dayHref = (date: string) => (date === today && mode === "me" ? "/" : `/day/${date}`);
 
   return (
     <div className="space-y-5">
@@ -93,6 +111,7 @@ export function TimelinePage() {
 
       {days.map((day, i) => (
         <div key={day.date} className="space-y-3">
+          {gapBefore.get(day.date) && <GapCard {...gapBefore.get(day.date)!} />}
           {day.milestones.map((m) =>
             editing?.id === m.id ? (
               <MilestoneForm
@@ -129,6 +148,29 @@ export function TimelinePage() {
   );
 }
 
+interface Gap {
+  from: string;
+  to: string;
+  ongoing?: boolean;
+}
+
+/** A stretch of days with nothing recorded, so gaps are visible instead of silently skipped. */
+function GapCard({ from, to, ongoing }: Gap) {
+  const n = daysBetween(from, to) + 1;
+  const short = (d: string) =>
+    new Date(d + "T00:00:00Z").toLocaleDateString("en-GB", { day: "numeric", month: "short", timeZone: "UTC" });
+  const range = n === 1 ? formatDate(from) : `${short(from)} – ${short(to)}`;
+  return (
+    <div className="flex flex-wrap items-center gap-x-3 gap-y-1 rounded-xl border-[1.5px] border-dashed border-[#d8cdbf] px-4 py-3 text-sm text-muted">
+      <StatusChip status="not_logged" />
+      <span>
+        {range} · {n} {n === 1 ? "day" : "days"}
+        {ongoing ? " so far" : ""}
+      </span>
+    </div>
+  );
+}
+
 /** A milestone-only date doesn't need an empty day card under it. */
 function hasDayContent(d: TimelineDay): boolean {
   return (
@@ -148,7 +190,7 @@ function DayCard({ day, index, href, surgeryDate }: { day: TimelineDay; index: n
   const photos = day.media.filter((m) => m.kind === "photo");
   const videos = day.media.filter((m) => m.kind === "video");
   const chips = [
-    day.total > 0 && `✓ ${day.done}/${day.total} exercises`,
+    day.total > 0 && `✓ ${day.done}/${day.total} exercises · ${percent(day.done, day.total)}%`,
     day.pain !== null && `Pain ${day.pain}/10`,
     day.swelling && day.swelling !== "none" && `Swelling: ${day.swelling}`,
     day.flexion_deg !== null && `Bend ${day.flexion_deg}°`,
@@ -174,7 +216,7 @@ function DayCard({ day, index, href, surgeryDate }: { day: TimelineDay; index: n
           <div className="text-xs text-muted">{postOp(surgeryDate, day.date).label}</div>
         </div>
         <div className="flex items-center gap-2">
-          {day.red_flag && <span className="rounded-full bg-clay px-2 py-0.5 text-[11px] font-semibold text-white">Red flag</span>}
+          <StatusChip status={dayStatus({ done: day.done, total: day.total, logged: true })} flag={day.red_flag} />
           {!!day.comments && <span className="text-xs text-sky">💬 {day.comments}</span>}
           {day.mood && <span className="text-3xl leading-none">{day.mood}</span>}
         </div>

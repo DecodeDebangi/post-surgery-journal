@@ -9,7 +9,10 @@ See [PLAN.md](PLAN.md) for the design and the build phases.
 
 ## What's built
 
-- **Access without accounts.** Public read-only, site PIN ("me"), doctor PIN.
+- **Access without accounts.** Anyone with the link can read everything except
+  the prescription, medicines and notes on the plan (so the doctor never needs
+  to log in just to look). Site PIN ("me") to log; doctor PIN to comment and
+  change the plan.
   The mode lives only on the server, in a session row keyed by an httpOnly
   cookie (30 days). 5 wrong PINs lock an IP out for 15 minutes.
 - **Prescription.** Exercises (session, days, sets, reps/time, notes, on/off)
@@ -20,7 +23,12 @@ See [PLAN.md](PLAN.md) for the design and the build phases.
   red flags, journal, photos and Drive videos, milestones. Saves as you go.
 - **Comments.** Me ↔ doctor threads on any day and on the plan, each optionally
   "about" an exercise, reading or medicine; unread badge and an inbox.
-- **Journey.** The public home: a scrapbook timeline of days and milestones.
+- **Overview.** The doctor's home page: today's numbers with what they were last
+  time, the last 14 days as a colour strip and a table, missed days and red
+  flags called out. Statuses: On track (80%+ of the day's exercises), Partial,
+  Not logged (`shared/status.ts`).
+- **Journey.** The public home: a scrapbook timeline of days and milestones,
+  with a status chip on each day and markers for missed stretches.
 - **Progress.** Streak, heatmap and charts (public); a weekly summary for the
   doctor with its own comments. Skipped days count as scheduled, so they lower
   the completion %.

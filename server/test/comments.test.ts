@@ -33,11 +33,22 @@ describe("Doctor comments", () => {
     assert.equal(forged.status, 400, "author can't be sent");
   });
 
-  test("public can't read or write comments", async () => {
-    await post(doctor, { body: "Private note" });
-    assert.equal((await call(api, "GET", `/api/comments?type=day&key=${today}`)).status, 401);
+  test("public can read comments but not write or mark them read", async () => {
+    await post(doctor, { body: "Keep icing after walks" });
+    const read = await call(api, "GET", `/api/comments?type=day&key=${today}`);
+    assert.equal(read.status, 200);
+    assert.equal(read.body.comments[0].body, "Keep icing after walks");
     assert.equal((await post(null, { body: "spam" })).status, 401);
-    assert.equal((await call(api, "GET", "/api/comments/inbox")).status, 401);
+    assert.equal((await call(api, "POST", "/api/comments/read", { body: { type: "day", key: today } })).status, 401);
+    await call(api, "POST", "/api/comments", {
+      cookie: doctor,
+      body: { target_type: "plan", target_key: "current", body: "Started a new medicine" },
+    });
+    assert.equal((await call(api, "GET", "/api/comments?type=plan&key=current")).status, 401, "plan notes need a PIN");
+    const inbox = await call(api, "GET", "/api/comments/inbox");
+    assert.equal(inbox.status, 200);
+    assert.equal(inbox.body.unread, 0, "no unread badge without a PIN");
+    assert.ok(inbox.body.comments.every((c: any) => c.target_type !== "plan"));
   });
 
   test("threads: one level of replies on the same target", async () => {

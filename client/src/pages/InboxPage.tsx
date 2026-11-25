@@ -6,11 +6,11 @@ import { authorLabel, timeLabel } from "../components/Comments.tsx";
 import { Link } from "../router.tsx";
 import { useSession } from "../session.tsx";
 
-function targetLink(c: Comment, today: string): { href: string; label: string } {
+function targetLink(c: Comment, today: string, mode: string): { href: string; label: string } {
   if (c.target_type === "plan") return { href: "/prescription#comments", label: "Prescription" };
   if (c.target_type === "week") return { href: `/week/${c.target_key}`, label: `Week ${c.target_key} summary` };
   return {
-    href: c.target_key === today ? "/#comments" : `/day/${c.target_key}#comments`,
+    href: c.target_key === today && mode === "me" ? "/#comments" : `/day/${c.target_key}#comments`,
     label: c.target_key === today ? "Today" : formatDate(c.target_key),
   };
 }
@@ -28,7 +28,7 @@ export function InboxPage() {
       .catch((e) => setError(e.message));
   }, []);
 
-  if (!session || session.mode === "public") return null;
+  if (!session) return null;
   const mode = session.mode;
 
   return (
@@ -38,7 +38,9 @@ export function InboxPage() {
         <p className="text-sm text-muted">
           {mode === "doctor"
             ? "Everything you and the patient have written, newest first. Open a day to reply or add a comment."
-            : "Everything you and your doctor have written, newest first. Open one to reply."}
+            : mode === "public"
+              ? "Notes between the patient and their doctor, newest first. Log in to reply."
+              : "Everything you and your doctor have written, newest first. Open one to reply."}
         </p>
       </div>
       {error && <p className="text-sm text-clay">{error}</p>}
@@ -49,7 +51,7 @@ export function InboxPage() {
         </p>
       )}
       {list?.map((c) => {
-        const { href, label } = targetLink(c, session.today);
+        const { href, label } = targetLink(c, session.today, mode);
         const unread = c.author !== mode && !c.read_at;
         return (
           <Link

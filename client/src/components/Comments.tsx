@@ -47,7 +47,7 @@ export function Comments({
       );
       setList(comments);
       setError(null);
-      if (comments.some((c) => c.author !== mode && !c.read_at)) {
+      if (mode !== "public" && comments.some((c) => c.author !== mode && !c.read_at)) {
         await api.post("/comments/read", { type, key: targetKey });
         refreshUnread();
       }
@@ -85,7 +85,12 @@ export function Comments({
   return (
     <section id="comments" className="scroll-mt-24 rounded-2xl border border-sky/25 bg-card p-4">
       <h2 className="font-semibold">💬 {title}</h2>
-      <p className="mb-3 text-xs text-muted">{intro ?? "Only you and your doctor see these."}</p>
+      <p className="mb-3 text-xs text-muted">
+        {intro ??
+          (mode === "public"
+            ? "Notes between the patient and their doctor."
+            : "Anyone with the link can read these; writing one needs a PIN.")}
+      </p>
 
       {error && <p className="mb-3 text-sm text-clay">{error}</p>}
       {list === null && !error && <p className="text-sm text-muted">Loading…</p>}
@@ -99,7 +104,7 @@ export function Comments({
               {replies(c.id).map((r) => (
                 <Bubble key={r.id} comment={r} mode={mode} />
               ))}
-              {replyTo === c.id ? (
+              {mode === "public" ? null : replyTo === c.id ? (
                 <Composer
                   placeholder="Write a reply…"
                   onSend={(body) => send(body, "", c.id)}
@@ -115,6 +120,11 @@ export function Comments({
         ))}
       </div>
 
+      {mode === "public" ? (
+        <p className="mt-4 border-t border-line pt-3 text-xs text-muted">
+          <a href="/unlock" className="text-sky underline">Log in</a> to add a comment.
+        </p>
+      ) : (
       <div className="mt-4 border-t border-line pt-4">
         <Composer
           aboutOptions={aboutOptions}
@@ -122,13 +132,14 @@ export function Comments({
           onSend={(body, about) => send(body, about, null)}
         />
       </div>
+      )}
     </section>
   );
 }
 
 function Bubble({ comment, mode }: { comment: Comment; mode: Mode }) {
   const fromDoctor = comment.author === "doctor";
-  const unread = comment.author !== mode && !comment.read_at;
+  const unread = mode !== "public" && comment.author !== mode && !comment.read_at;
   return (
     <div className={`rounded-xl p-3 ${fromDoctor ? "bg-sky-soft" : "bg-paper"}`}>
       <div className="mb-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs">

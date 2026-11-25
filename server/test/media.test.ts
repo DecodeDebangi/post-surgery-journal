@@ -131,7 +131,7 @@ describe("Photos, videos, milestones, timeline", () => {
     assert.equal(list.body.milestones[0].title, "First stairs without the rail");
   });
 
-  test("timeline: shows days with content; private parts only for me and the doctor", async () => {
+  test("timeline: shows days with content; private photos only for me and the doctor", async () => {
     await call(api, "POST", `/api/days/${today}/ensure`, { cookie: me });
     // An empty, just-opened day doesn't show up.
     assert.equal((await call(api, "GET", "/api/timeline")).body.days.length, 0);
@@ -152,8 +152,8 @@ describe("Photos, videos, milestones, timeline", () => {
     assert.equal(day.date, today);
     assert.equal(day.journal, "Walked to the shop");
     assert.equal(day.media.length, 1, "public sees only the non-private photo");
-    assert.equal("red_flag" in day, false);
-    assert.equal("comments" in day, false);
+    assert.equal(day.red_flag, true, "red flags are visible without a PIN");
+    assert.equal(day.comments, 1);
 
     const [full] = (await call(api, "GET", "/api/timeline", { cookie: doctor })).body.days;
     assert.equal(full.media.length, 2);

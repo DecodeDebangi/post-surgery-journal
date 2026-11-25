@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { addDays, postOp, todayIn, weekRange, weekdayOf } from "../../../shared/postop.ts";
 import { RED_FLAGS, type RedFlagKey } from "../../../shared/types.ts";
-import { modeOf, requireMode } from "../auth.ts";
+import { modeOf } from "../auth.ts";
 import { config } from "../config.ts";
 import { sql } from "../db.ts";
 import { BadRequest } from "../validate.ts";
@@ -127,7 +127,7 @@ const latest = (days: DayStat[], key: "flexion_deg" | "extension_deg") =>
   [...days].reverse().find((d) => d[key] !== null) ?? null;
 
 /** The 30-second weekly summary for the doctor. */
-stats.get("/weeks/:n", requireMode("me", "doctor"), async (req, res) => {
+stats.get("/weeks/:n", async (req, res) => {
   const n = Number(req.params.n);
   const { surgeryDate, timeZone } = config();
   const today = todayIn(timeZone);

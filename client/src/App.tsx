@@ -12,6 +12,7 @@ const ProgressPage = () => (
 );
 import { HistoryPage } from "./pages/HistoryPage.tsx";
 import { InboxPage } from "./pages/InboxPage.tsx";
+import { OverviewPage } from "./pages/OverviewPage.tsx";
 import { PrescriptionPage } from "./pages/PrescriptionPage.tsx";
 import { TimelinePage } from "./pages/TimelinePage.tsx";
 import { UnlockPage } from "./pages/UnlockPage.tsx";
@@ -65,10 +66,12 @@ export function App() {
   else if (match("/comments", path)) page = <InboxPage />;
   else if (match("/timeline", path)) page = <TimelinePage />;
   else if (match("/progress", path)) page = <ProgressPage />;
+  else if (match("/overview", path)) page = <OverviewPage />;
   else if (week) page = <WeekPage key={week.n} week={Number(week.n)} />;
   else if (day) page = <DayPage key={day.date} date={day.date} />;
   // The public lands on the scrapbook; me and the doctor land on today's log.
-  else if (mode === "public") page = <TimelinePage />;
+  // The public and the doctor land on the at-a-glance overview; I land on today's log.
+  else if (mode !== "me") page = <OverviewPage />;
   else page = <DayPage key="today" date={session.today} />;
 
   async function exit() {
@@ -76,14 +79,25 @@ export function App() {
     navigate("/");
   }
 
-  const todayHref = mode === "public" ? `/day/${session.today}` : "/";
+  const todayHref = mode === "me" ? "/" : `/day/${session.today}`;
   const tabs =
     mode === "public"
       ? [
-          { href: "/", label: "Journey", icon: "📖", active: path === "/" || path === "/timeline", badge: 0 },
+          { href: "/", label: "Overview", icon: "🩺", active: path === "/" || path === "/overview", badge: 0 },
+          { href: "/timeline", label: "Journey", icon: "📖", active: path === "/timeline", badge: 0 },
           { href: todayHref, label: "Today", icon: "📅", active: !!day, badge: 0 },
-          { href: "/progress", label: "Progress", icon: "📈", active: path === "/progress", badge: 0 },
+          { href: "/progress", label: "Progress", icon: "📈", active: path === "/progress" || !!week, badge: 0 },
+          { href: "/comments", label: "Comments", icon: "💬", active: path === "/comments", badge: 0 },
         ]
+      : mode === "doctor"
+        ? [
+            { href: "/", label: "Overview", icon: "🩺", active: path === "/" || path === "/overview", badge: 0 },
+            { href: todayHref, label: "Today", icon: "📅", active: !!day, badge: 0 },
+            { href: "/timeline", label: "Journey", icon: "📖", active: path === "/timeline", badge: 0 },
+            { href: "/progress", label: "Progress", icon: "📈", active: path === "/progress" || !!week, badge: 0 },
+            { href: "/comments", label: "Comments", icon: "💬", active: path === "/comments", badge: unread },
+            { href: "/prescription", label: "Plan", icon: "📋", active: path.startsWith("/prescription"), badge: 0 },
+          ]
       : [
           { href: "/", label: "Today", icon: "📅", active: path === "/" || !!day, badge: 0 },
           { href: "/timeline", label: "Journey", icon: "📖", active: path === "/timeline", badge: 0 },
@@ -93,7 +107,7 @@ export function App() {
         ];
 
   // The Today page uses two columns on desktop; reading pages stay at a comfortable width.
-  const wide = path === "/" ? mode !== "public" : !!day;
+  const wide = path === "/" || !!day || path === "/overview";
 
   return (
     <div className="lg:flex">
@@ -173,6 +187,14 @@ interface Tab {
 }
 
 const ICONS: Record<string, ReactNode> = {
+  Overview: (
+    <>
+      <rect x="3" y="3" width="7" height="9" rx="1.5" />
+      <rect x="14" y="3" width="7" height="5" rx="1.5" />
+      <rect x="14" y="12" width="7" height="9" rx="1.5" />
+      <rect x="3" y="16" width="7" height="5" rx="1.5" />
+    </>
+  ),
   Today: (
     <>
       <rect x="3" y="5" width="18" height="16" rx="2" />

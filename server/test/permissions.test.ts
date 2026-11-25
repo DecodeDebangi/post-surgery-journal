@@ -44,7 +44,7 @@ describe("Access levels: public, me, doctor", () => {
     assert.equal((await call(api, "DELETE", `/api/days/${today}`)).status, 401);
   });
 
-  test("public reads a day without private fields", async () => {
+  test("public reads a day with red flags but without the prescription", async () => {
     await addMedicine(me);
     await call(api, "POST", `/api/days/${today}/ensure`, { cookie: me });
     await call(api, "PATCH", `/api/days/${today}`, {
@@ -56,7 +56,7 @@ describe("Access levels: public, me, doctor", () => {
     assert.equal(pub.status, 200);
     assert.equal(pub.body.pain, 3);
     assert.equal(pub.body.journal, "Good day");
-    assert.equal("flag_giving_way" in pub.body, false, "red flags are private");
+    assert.equal(pub.body.flag_giving_way, true, "red flags are visible without a PIN");
     assert.ok(pub.body.items.length > 0);
     assert.ok(pub.body.items.every((i: any) => i.kind === "exercise"), "medicines are private");
     for (const item of pub.body.items) {

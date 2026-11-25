@@ -47,7 +47,7 @@ timeline.get("/", async (req, res) => {
   const [media, milestones, comments] = await Promise.all([
     mediaFor(dates, mode),
     milestonesFor(dates),
-    mode === "public" || dates.length === 0
+    dates.length === 0
       ? Promise.resolve([])
       : sql()`select target_key, count(*)::int as n from comments
               where target_type = 'day' and target_key = any(${dates}) group by target_key`,
@@ -68,10 +68,8 @@ timeline.get("/", async (req, res) => {
       media: media.filter((m) => m.date === r.date),
       milestones: milestones.filter((m) => m.date === r.date),
     };
-    if (mode !== "public") {
-      day.red_flag = r.red_flag;
-      day.comments = comments.find((c) => c.target_key === r.date)?.n ?? 0;
-    }
+    day.red_flag = r.red_flag;
+    day.comments = comments.find((c) => c.target_key === r.date)?.n ?? 0;
     return day;
   });
 

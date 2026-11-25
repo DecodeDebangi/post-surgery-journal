@@ -8,6 +8,7 @@ import { media } from "./routes/media.ts";
 import { milestones } from "./routes/milestones.ts";
 import { stats } from "./routes/stats.ts";
 import { timeline } from "./routes/timeline.ts";
+import { overview } from "./routes/overview.ts";
 import { prescription } from "./routes/prescription.ts";
 import { BadRequest } from "./validate.ts";
 
@@ -60,6 +61,7 @@ export function createApp(opts: { trustProxy?: boolean } = {}) {
   app.use("/api/milestones", milestones);
   app.use("/api/timeline", timeline);
   app.use("/api/stats", stats);
+  app.use("/api/overview", overview);
 
   app.use("/api", (_req, res) => res.status(404).json({ error: "Not found" }));
 

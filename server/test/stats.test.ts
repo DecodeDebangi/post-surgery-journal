@@ -72,9 +72,9 @@ describe("Stats API", () => {
     assert.ok(r.body.weeks.reduce((a: number, w: any) => a + w.total, 0) >= totalA + totalB);
   });
 
-  test("weekly summary: private to me and the doctor, with angles and red flags", async () => {
+  test("weekly summary: open without a PIN, with angles and red flags", async () => {
     await logDay(today, 1, { pain: 3, flexion_deg: 115, extension_deg: -2, flag_giving_way: true, journal: "Wobbly" });
-    assert.equal((await call(api, "GET", `/api/stats/weeks/${week}`)).status, 401);
+    assert.equal((await call(api, "GET", `/api/stats/weeks/${week}`)).status, 200);
 
     const r = await call(api, "GET", `/api/stats/weeks/${week}`, { cookie: doctor });
     assert.equal(r.status, 200);

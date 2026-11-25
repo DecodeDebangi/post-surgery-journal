@@ -44,13 +44,10 @@ export function WeekPage({ week }: { week: number }) {
     api.get<Summary>(`/stats/weeks/${week}`).then(setS).catch((e) => setError(e.message));
   }, [week]);
 
-  if (mode === "public") {
-    return <p className="rounded-2xl border border-line bg-card p-6 text-center text-muted">Weekly summaries are private.</p>;
-  }
   if (error) return <p className="rounded-2xl bg-clay-soft p-3 text-sm text-clay">{error}</p>;
   if (!s) return <p className="py-10 text-center text-muted">Loading…</p>;
 
-  const dayHref = (d: string) => (d === today ? "/" : `/day/${d}`);
+  const dayHref = (d: string) => (d === today && mode === "me" ? "/" : `/day/${d}`);
 
   return (
     <div className="space-y-4">
@@ -139,7 +136,7 @@ export function WeekPage({ week }: { week: number }) {
         targetKey={String(week)}
         title={`Comments on week ${week}`}
         aboutOptions={["Exercises", "Pain", "Swelling", "Knee angles", "Red flags", "Photos & videos"]}
-        intro={mode === "doctor" ? "Feedback on the week as a whole. Only you and the patient see these." : undefined}
+        intro={mode === "doctor" ? "Feedback on the week as a whole. Anyone with the link can read these." : undefined}
       />
       <p className="text-center text-xs text-muted">Summary for {formatDate(s.start)} to {formatDate(s.end)}.</p>
     </div>

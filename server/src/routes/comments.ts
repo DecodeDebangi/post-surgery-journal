@@ -7,8 +7,9 @@ import { BadRequest, int, oneOf, pick, str } from "../validate.ts";
 
 export const comments = Router();
 
-// Comments are a private channel between me and the doctor.
-comments.use(requireMode("me", "doctor"));
+// Anyone with the link can read comments; writing one (and the unread
+// bookkeeping) needs the site or doctor PIN.
+const pinOnly = requireMode("me", "doctor");
 
 const TARGET_TYPES = ["day", "week", "plan"] as const;
 
@@ -25,6 +26,10 @@ function targetOf(req: Request) {
 
 comments.get("/", async (req, res) => {
   const { type, key } = targetOf(req);
+  // Notes on the plan talk about the prescription and medicines: PIN only.
+  if (type === "plan" && modeOf(res) === "public") {
+    return res.status(401).json({ error: "Enter the PIN first." });
+  }
   const rows = await sql()`
     select id, target_type, target_key, parent_id, about, author, body, created_at, read_at from comments
     where target_type = ${type} and target_key = ${key}
@@ -32,7 +37,7 @@ comments.get("/", async (req, res) => {
   res.json({ comments: rows });
 });
 
-comments.post("/", async (req, res) => {
+comments.post("/", pinOnly, async (req, res) => {
   const fields = pick(
     req.body,
     {
@@ -66,7 +71,7 @@ comments.post("/", async (req, res) => {
 });
 
 /** Marks the other person's comments on a target as read. */
-comments.post("/read", async (req, res) => {
+comments.post("/read", pinOnly, async (req, res) => {
   const { type, key } = checkTarget(req.body?.type, req.body?.key);
   const rows = await sql()`
     update comments set read_at = now()
@@ -80,8 +85,12 @@ comments.post("/read", async (req, res) => {
 comments.get("/inbox", async (_req, res) => {
   const mode = modeOf(res);
   const [recent, [{ unread }]] = await Promise.all([
-    sql()`select id, target_type, target_key, parent_id, about, author, body, created_at, read_at from comments order by created_at desc, id desc limit 100`,
-    sql()`select count(*)::int as unread from comments where author <> ${mode} and read_at is null`,
+    sql()`select id, target_type, target_key, parent_id, about, author, body, created_at, read_at from comments
+           where ${mode !== "public"} or target_type <> 'plan'
+           order by created_at desc, id desc limit 100`,
+    mode === "public"
+      ? Promise.resolve([{ unread: 0 }])
+      : sql()`select count(*)::int as unread from comments where author <> ${mode} and read_at is null`,
   ]);
   res.json({ unread, comments: recent });
 });

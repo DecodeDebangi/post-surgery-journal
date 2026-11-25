@@ -65,7 +65,7 @@ export function ProgressPage() {
     api.get<Stats>("/stats").then(setStats).catch((e) => setError(e.message));
   }, []);
 
-  const dayHref = (date: string) => (date === today && mode !== "public" ? "/" : `/day/${date}`);
+  const dayHref = (date: string) => (date === today && mode === "me" ? "/" : `/day/${date}`);
 
   if (error) return <p className="rounded-2xl bg-clay-soft p-3 text-sm text-clay">{error}</p>;
   if (!stats) return <p className="py-10 text-center text-muted">Loading…</p>;
@@ -179,7 +179,7 @@ export function ProgressPage() {
         </Chart>
       </Card>
 
-      {mode !== "public" && (
+      {(
         <Card title="Weekly summaries" subtitle="A one-screen recap of each week for your doctor, with its own comments.">
           <ul className="divide-y divide-line">
             {[...stats.weeks].reverse().map((w) => (
