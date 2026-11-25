@@ -117,7 +117,7 @@ export function DayPage({ date }: { date: string }) {
           <span className="px-3" />
         )}
         <div className="text-center">
-          <div className="font-semibold">{date === today ? "Today" : formatDate(date)}</div>
+          <div className="font-semibold lg:text-2xl">{date === today ? "Today" : formatDate(date)}</div>
           <div className="text-xs text-muted">
             {date === today ? `${formatDate(date)} · ` : ""}
             {op.label}
@@ -209,7 +209,12 @@ export function DayPage({ date }: { date: string }) {
             </div>
           )}
 
-          <Checklist day={day} mode={mode} writable={writable} onItem={updateItem} />
+          {/* Phone: one column. Desktop: checklist on the left, everything else on the right. */}
+          <div className="space-y-4 lg:grid lg:grid-cols-2 lg:items-start lg:gap-6 lg:space-y-0">
+          <div className="min-w-0 space-y-4">
+            <Checklist day={day} mode={mode} writable={writable} onItem={updateItem} />
+          </div>
+          <div className="min-w-0 space-y-4">
 
           <Card title="How the knee feels">
             <Field label="Pain" hint="0 = none, 10 = worst">
@@ -314,6 +319,8 @@ export function DayPage({ date }: { date: string }) {
                 ⭐ Mark a milestone for this day
               </button>
             ))}
+          </div>
+          </div>
 
           {writable && (
             <div className="flex items-center justify-between pt-2 text-xs text-muted">
